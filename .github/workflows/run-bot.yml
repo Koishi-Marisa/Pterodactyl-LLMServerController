@@ -21,10 +21,11 @@ env:
   PTERODACTYL_SERVER_ID: ${{ secrets.PTERODACTYL_SERVER_ID }}
 
   # ── AI 配置 ──
-  AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'openai' }}
-  AI_API_URL: ${{ secrets.AI_API_URL || 'https://api.openai.com/v1/chat/completions' }}
+  # 支持的提供商: zhipu(智谱) / openai / deepseek / ollama / custom
+  AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'zhipu' }}
+  AI_API_URL: ${{ secrets.AI_API_URL }}
   AI_API_KEY: ${{ secrets.AI_API_KEY }}
-  AI_MODEL: ${{ secrets.AI_MODEL || 'gpt-4o-mini' }}
+  AI_MODEL: ${{ secrets.AI_MODEL || 'glm-4-flash' }}
   AI_MAX_TOKENS: ${{ secrets.AI_MAX_TOKENS || '300' }}
   AI_TEMPERATURE: ${{ secrets.AI_TEMPERATURE || '0.7' }}
 

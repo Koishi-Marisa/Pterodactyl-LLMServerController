@@ -108,13 +108,18 @@ PYTHONPATH=src python -m pterodactyl_bot.main
 
 ### 获取 AI API Key
 
-支持任何 OpenAI 兼容接口：
+内置支持以下 AI 提供商（设置 `AI_PROVIDER` 即可自动配置）：
 
-| 提供商 | API URL | 获取 Key |
-|---|---|---|
-| OpenAI | `https://api.openai.com/v1/chat/completions` | platform.openai.com |
-| DeepSeek | `https://api.deepseek.com/v1/chat/completions` | platform.deepseek.com |
-| Ollama (本地) | `http://localhost:11434/v1/chat/completions` | 无需 Key |
+| 提供商 | AI_PROVIDER 值 | 默认模型 | 获取 Key |
+|---|---|---|---|
+| **智谱AI（推荐）** | `zhipu` | `glm-4-flash`（免费） | [bigmodel.cn](https://bigmodel.cn) |
+| OpenAI | `openai` | `gpt-4o-mini` | platform.openai.com |
+| DeepSeek | `deepseek` | `deepseek-chat` | platform.deepseek.com |
+| Ollama (本地) | `ollama` | `llama3` | 无需 Key |
+
+智谱平台免费模型推荐：`glm-4-flash`（文本）、`GLM-4-Air`（增强）、`GLM-4V-Flash`（多模态）
+
+使用自定义接口时，设置 `AI_PROVIDER=custom` 并填写 `AI_API_URL`。
 
 ## 触发模式说明
 

@@ -17,12 +17,21 @@ class Config:
     server_identifier: str = ""  # 服务器短 UUID (identifier)
 
     # ── AI 配置 ──
-    ai_provider: str = "openai"  # openai / custom
-    ai_api_url: str = "https://api.openai.com/v1/chat/completions"
+    # 支持的 provider: openai / zhipu / deepseek / ollama / custom
+    ai_provider: str = "zhipu"
+    ai_api_url: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
     ai_api_key: str = ""
-    ai_model: str = "gpt-4o-mini"
+    ai_model: str = "glm-4-flash"
     ai_max_tokens: int = 300
     ai_temperature: float = 0.7
+
+    # 内置 AI 提供商预设 {name: (api_url, default_model)}
+    AI_PROVIDERS = {
+        "openai": ("https://api.openai.com/v1/chat/completions", "gpt-4o-mini"),
+        "zhipu": ("https://open.bigmodel.cn/api/paas/v4/chat/completions", "glm-4-flash"),
+        "deepseek": ("https://api.deepseek.com/v1/chat/completions", "deepseek-chat"),
+        "ollama": ("http://localhost:11434/v1/chat/completions", "llama3"),
+    }
 
     # ── 机器人行为配置 ──
     bot_name: str = "AI助手"
@@ -49,17 +58,29 @@ class Config:
 
     @classmethod
     def from_env(cls) -> "Config":
-        """从环境变量加载配置"""
+        """从环境变量加载配置，自动解析 AI 提供商"""
+        provider = os.getenv("AI_PROVIDER", "zhipu").lower()
+
+        # 根据 provider 自动填充 API URL 和默认模型
+        if provider in cls.AI_PROVIDERS:
+            default_url, default_model = cls.AI_PROVIDERS[provider]
+        else:
+            default_url = "https://api.openai.com/v1/chat/completions"
+            default_model = "gpt-4o-mini"
+
+        # 自定义 API URL 优先于预设
+        custom_url = os.getenv("AI_API_URL", "")
+        api_url = custom_url if custom_url else default_url
+        model = os.getenv("AI_MODEL", default_model)
+
         return cls(
             panel_url=os.getenv("PTERODACTYL_PANEL_URL", ""),
             api_key=os.getenv("PTERODACTYL_API_KEY", ""),
             server_identifier=os.getenv("PTERODACTYL_SERVER_ID", ""),
-            ai_provider=os.getenv("AI_PROVIDER", "openai"),
-            ai_api_url=os.getenv(
-                "AI_API_URL", "https://api.openai.com/v1/chat/completions"
-            ),
+            ai_provider=provider,
+            ai_api_url=api_url,
             ai_api_key=os.getenv("AI_API_KEY", ""),
-            ai_model=os.getenv("AI_MODEL", "gpt-4o-mini"),
+            ai_model=model,
             ai_max_tokens=int(os.getenv("AI_MAX_TOKENS", "300")),
             ai_temperature=float(os.getenv("AI_TEMPERATURE", "0.7")),
             bot_name=os.getenv("BOT_NAME", "AI助手"),
