@@ -40,7 +40,7 @@ class Config:
         "每次回复控制在50字以内。不要使用特殊字符和代码块。"
     )
     game_type: str = "minecraft"  # minecraft / palworld / generic
-    trigger_mode: str = "mention"  # mention / all / keyword
+    trigger_mode: str = "all"  # mention / all / keyword
     trigger_keyword: str = "AI"
     cooldown_seconds: int = 10  # 同一玩家回复冷却时间
     command_prefix: str = "!"  # 管理员命令前缀
