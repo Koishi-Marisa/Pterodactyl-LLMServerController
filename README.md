@@ -49,7 +49,7 @@ src/pterodactyl_bot/
 |---|---|---|
 | `AI_PROVIDER` | `zhipu` | AI 提供商 |
 | `AI_API_URL` | 自动填充 | 自定义 AI 端点（覆盖预设） |
-| `AI_MODEL` | `glm-4-flash` | 模型名称 |
+| `AI_MODEL` | `GLM-4.7-Flash` | 模型名称 |
 | `GAME_TYPE` | `minecraft` | `minecraft` / `palworld` / `generic` |
 | `TRIGGER_MODE` | `mention` | `mention` / `all` / `keyword` |
 | `TRIGGER_KEYWORD` | `AI` | 触发关键词 |
@@ -113,12 +113,12 @@ PYTHONPATH=src python -m pterodactyl_bot.main
 
 | 提供商 | AI_PROVIDER 值 | 默认模型 | 获取 Key |
 |---|---|---|---|
-| **智谱AI（推荐）** | `zhipu` | `glm-4-flash`（免费） | [bigmodel.cn](https://bigmodel.cn) |
+| **智谱AI（推荐）** | `zhipu` | `GLM-4.7-Flash`（免费） | [bigmodel.cn](https://bigmodel.cn) |
 | OpenAI | `openai` | `gpt-4o-mini` | platform.openai.com |
 | DeepSeek | `deepseek` | `deepseek-chat` | platform.deepseek.com |
 | Ollama (本地) | `ollama` | `llama3` | 无需 Key |
 
-智谱平台免费模型推荐：`glm-4-flash`（文本）、`GLM-4-Air`（增强）、`GLM-4V-Flash`（多模态）
+智谱平台免费模型推荐：`GLM-4.7-Flash`（文本）、`GLM-4-Air`（增强）、`GLM-4V-Flash`（多模态）
 
 使用自定义接口时，设置 `AI_PROVIDER=custom` 并填写 `AI_API_URL`。
 

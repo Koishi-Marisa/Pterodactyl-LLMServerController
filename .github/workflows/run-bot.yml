@@ -24,7 +24,7 @@ env:
   AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'zhipu' }}
   AI_API_URL: ${{ secrets.AI_API_URL }}
   AI_API_KEY: ${{ secrets.AI_API_KEY }}
-  AI_MODEL: ${{ secrets.AI_MODEL || 'glm-4-flash' }}
+  AI_MODEL: ${{ secrets.AI_MODEL || 'GLM-4.7-Flash' }}
   AI_MAX_TOKENS: ${{ secrets.AI_MAX_TOKENS || '300' }}
   AI_TEMPERATURE: ${{ secrets.AI_TEMPERATURE || '0.7' }}
 

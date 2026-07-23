@@ -20,14 +20,14 @@ class Config:
     ai_provider: str = "zhipu"
     ai_api_url: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
     ai_api_key: str = ""
-    ai_model: str = "glm-4-flash"
+    ai_model: str = "GLM-4.7-Flash"
     ai_max_tokens: int = 300
     ai_temperature: float = 0.7
 
     # 内置 AI 提供商预设 {name: (api_url, default_model)}
     AI_PROVIDERS = {
         "openai": ("https://api.openai.com/v1/chat/completions", "gpt-4o-mini"),
-        "zhipu": ("https://open.bigmodel.cn/api/paas/v4/chat/completions", "glm-4-flash"),
+        "zhipu": ("https://open.bigmodel.cn/api/paas/v4/chat/completions", "GLM-4.7-Flash"),
         "deepseek": ("https://api.deepseek.com/v1/chat/completions", "deepseek-chat"),
         "ollama": ("http://localhost:11434/v1/chat/completions", "llama3"),
     }
