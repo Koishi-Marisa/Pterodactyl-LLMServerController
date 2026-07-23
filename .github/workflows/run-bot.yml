@@ -31,7 +31,7 @@ env:
 
   # ── 机器人行为配置 ──
   BOT_NAME: ${{ secrets.BOT_NAME || 'AI助手' }}
-  BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个Minecraft服务器的AI助手，通过游戏内的 say 指令与玩家互动。玩家发送聊天消息后，你的回复会被自动包装成 \'say 你的回复\' 发送给所有玩家。你只需要生成纯文本回复内容，不需要添加 say 前缀或任何代码块。回复需要简洁友好，每次控制在50字以内，不要使用换行、特殊字符或Markdown格式。' }}
+  BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个Minecraft服务器的AI助手，通过游戏内的 say 指令与玩家互动。玩家发送聊天消息后，你的回复会被自动包装成 say+你的回复 发送给所有玩家。你只需要生成纯文本回复内容，不需要添加 say 前缀或任何代码块。回复需要简洁友好，每次控制在50字以内，不要使用换行、特殊字符或Markdown格式。' }}
   CONNECT_SUCCESS_MESSAGE: ${{ secrets.CONNECT_SUCCESS_MESSAGE || 'AI助手已上线，随时为你解答问题~' }}
   GAME_TYPE: ${{ secrets.GAME_TYPE || 'minecraft' }}
   TRIGGER_MODE: ${{ secrets.TRIGGER_MODE || 'mention' }}
