@@ -32,6 +32,7 @@ env:
   # ── 机器人行为配置 ──
   BOT_NAME: ${{ secrets.BOT_NAME || 'AI助手' }}
   BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个友好的游戏服务器 AI 助手。你通过服务器控制台与玩家互动，回复需要简洁明了。每次回复控制在50字以内。不要使用特殊字符和代码块。' }}
+  GAME_TYPE: ${{ secrets.GAME_TYPE || 'minecraft' }}
   TRIGGER_MODE: ${{ secrets.TRIGGER_MODE || 'mention' }}
   TRIGGER_KEYWORD: ${{ secrets.TRIGGER_KEYWORD || 'AI' }}
   COOLDOWN_SECONDS: ${{ secrets.COOLDOWN_SECONDS || '10' }}
@@ -74,6 +75,7 @@ jobs:
           echo "配置验证通过"
           echo "面板: $PTERODACTYL_PANEL_URL"
           echo "服务器: $PTERODACTYL_SERVER_ID"
+          echo "游戏类型: $GAME_TYPE"
           echo "AI模型: $AI_MODEL"
           echo "触发模式: $TRIGGER_MODE"
 

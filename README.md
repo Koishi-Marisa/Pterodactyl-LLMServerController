@@ -47,9 +47,10 @@ src/pterodactyl_bot/
 
 | Secret 名称 | 默认值 | 说明 |
 |---|---|---|
-| `AI_PROVIDER` | `openai` | AI 提供商 |
-| `AI_API_URL` | OpenAI 地址 | 自定义 AI 端点 |
-| `AI_MODEL` | `gpt-4o-mini` | 模型名称 |
+| `AI_PROVIDER` | `zhipu` | AI 提供商 |
+| `AI_API_URL` | 自动填充 | 自定义 AI 端点（覆盖预设） |
+| `AI_MODEL` | `glm-4-flash` | 模型名称 |
+| `GAME_TYPE` | `minecraft` | `minecraft` / `palworld` / `generic` |
 | `TRIGGER_MODE` | `mention` | `mention` / `all` / `keyword` |
 | `TRIGGER_KEYWORD` | `AI` | 触发关键词 |
 | `BOT_NAME` | `AI助手` | 机器人名称 |

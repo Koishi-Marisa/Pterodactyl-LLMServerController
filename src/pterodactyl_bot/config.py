@@ -4,7 +4,6 @@
 """
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -40,7 +39,8 @@ class Config:
         "你通过服务器控制台与玩家互动，回复需要简洁明了。"
         "每次回复控制在50字以内。不要使用特殊字符和代码块。"
     )
-    trigger_mode: str = "all"  # mention / all / keyword
+    game_type: str = "minecraft"  # minecraft / palworld / generic
+    trigger_mode: str = "mention"  # mention / all / keyword
     trigger_keyword: str = "AI"
     cooldown_seconds: int = 10  # 同一玩家回复冷却时间
     command_prefix: str = "!"  # 管理员命令前缀
@@ -85,6 +85,7 @@ class Config:
             ai_temperature=float(os.getenv("AI_TEMPERATURE", "0.7")),
             bot_name=os.getenv("BOT_NAME", "AI助手"),
             bot_prompt=os.getenv("BOT_PROMPT", cls.bot_prompt),
+            game_type=os.getenv("GAME_TYPE", "minecraft"),
             trigger_mode=os.getenv("TRIGGER_MODE", "mention"),
             trigger_keyword=os.getenv("TRIGGER_KEYWORD", "AI"),
             cooldown_seconds=int(os.getenv("COOLDOWN_SECONDS", "10")),

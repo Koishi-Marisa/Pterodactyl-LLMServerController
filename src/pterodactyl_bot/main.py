@@ -36,7 +36,7 @@ class PterodactylBot:
         self.config = config
         self.client = PterodactylClient(config)
         self.ai = AIChat(config)
-        self.parser = MessageParser()
+        self.parser = MessageParser(game_type=config.game_type)
         self.handler = EventHandler(self.client, self.ai, self.parser)
         self._running = False
 

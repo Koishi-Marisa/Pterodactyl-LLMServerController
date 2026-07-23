@@ -3,6 +3,7 @@
 处理 WebSocket 消息，管理聊天交互流程
 """
 import asyncio
+import json
 import logging
 import time
 
@@ -21,7 +22,6 @@ class EventHandler:
         self.ai = ai
         self.parser = parser
         self.config = client.config
-        self._running = False
         self._stats_last_print = time.time()
 
     async def handle_ws_message(self, data: dict):
@@ -89,7 +89,7 @@ class EventHandler:
                 await self.client.send_say(clean_reply)
                 logger.info(f"[AI回复] -> {chat_msg.player}: {clean_reply}")
         except Exception as e:
-            logger.error(f"AI 回复异常: {e}")
+            logger.error(f"AI 回复异常: {e}", exc_info=True)
 
     def _should_trigger(self, chat_msg: ChatMessage) -> bool:
         """判断是否应该触发 AI 回复"""
@@ -156,15 +156,15 @@ class EventHandler:
             return
         self._stats_last_print = now
 
-        if args:
-            import json
-            try:
-                stats = json.loads(args[0]) if isinstance(args[0], str) else args[0]
-                memory_mb = stats.get("memory_bytes", 0) / (1024 * 1024)
-                cpu = stats.get("cpu_absolute", 0)
-                logger.info(f"[统计] CPU: {cpu:.1f}% | 内存: {memory_mb:.0f}MB")
-            except (json.JSONDecodeError, TypeError):
-                pass
+        if not args:
+            return
+        try:
+            stats = json.loads(args[0]) if isinstance(args[0], str) else args[0]
+            memory_mb = stats.get("memory_bytes", 0) / (1024 * 1024)
+            cpu = stats.get("cpu_absolute", 0)
+            logger.info(f"[统计] CPU: {cpu:.1f}% | 内存: {memory_mb:.0f}MB")
+        except (json.JSONDecodeError, TypeError):
+            pass
 
     def _handle_status(self, args: list):
         """处理服务器状态变化"""
