@@ -40,7 +40,7 @@ class Config:
         "你通过服务器控制台与玩家互动，回复需要简洁明了。"
         "每次回复控制在50字以内。不要使用特殊字符和代码块。"
     )
-    trigger_mode: str = "mention"  # mention / all / keyword
+    trigger_mode: str = "all"  # mention / all / keyword
     trigger_keyword: str = "AI"
     cooldown_seconds: int = 10  # 同一玩家回复冷却时间
     command_prefix: str = "!"  # 管理员命令前缀
