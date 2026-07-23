@@ -27,6 +27,7 @@ class PterodactylClient:
         self.server_id = config.server_identifier
 
         self._ws: aiohttp.ClientWebSocketResponse | None = None
+        self._ws_session: aiohttp.ClientSession | None = None
         self._session: aiohttp.ClientSession | None = None
         self._ws_token: str = ""
         self._ws_url: str = ""
@@ -49,6 +50,8 @@ class PterodactylClient:
             self._token_refresh_task.cancel()
         if self._ws and not self._ws.closed:
             await self._ws.close()
+        if self._ws_session and not self._ws_session.closed:
+            await self._ws_session.close()
         if self._session and not self._session.closed:
             await self._session.close()
         logger.info("翼龙面板客户端已关闭")
@@ -127,12 +130,46 @@ class PterodactylClient:
         # 关闭旧连接
         if self._ws and not self._ws.closed:
             await self._ws.close()
+        if self._ws_session and not self._ws_session.closed:
+            await self._ws_session.close()
+
+        # Wings 节点需要:
+        # 1. Origin 头匹配面板地址（CORS 校验）
+        # 2. Authorization 头携带 JWT token（不是面板 API Key）
+        # 不能用 _session 的默认头，因为里面有面板 API Key 会触发 403
+        ws_headers = {
+            "Origin": self.panel_url,
+            "Authorization": f"Bearer {self._ws_token}",
+        }
 
         logger.info(f"正在连接 WebSocket: {self._ws_url}")
-        self._ws = await self._session.ws_connect(
-            self._ws_url,
-            heartbeat=self.config.ping_interval,
-        )
+        # 使用独立会话，避免面板 API Key 污染请求头
+        self._ws_session = aiohttp.ClientSession()
+        try:
+            self._ws = await self._ws_session.ws_connect(
+                self._ws_url,
+                headers=ws_headers,
+                heartbeat=self.config.ping_interval,
+            )
+        except aiohttp.WSServerHandshakeError as e:
+            # 如果带 Origin 仍然 403，尝试不带 Origin（某些 Wings 配置不校验）
+            if e.status == 403 and "Origin" in ws_headers:
+                logger.warning(
+                    "首次连接被拒 (403)，尝试不带 Origin 头重连..."
+                )
+                del ws_headers["Origin"]
+                try:
+                    self._ws = await self._ws_session.ws_connect(
+                        self._ws_url,
+                        headers=ws_headers,
+                        heartbeat=self.config.ping_interval,
+                    )
+                except Exception:
+                    await self._ws_session.close()
+                    raise
+            else:
+                await self._ws_session.close()
+                raise
 
         # 发送认证消息
         auth_msg = json.dumps({"event": "auth", "args": [self._ws_token]})
