@@ -2,6 +2,7 @@
 AI 聊天模块
 支持 OpenAI 兼容 API（OpenAI / DeepSeek / Ollama / 自定义端点）
 """
+import asyncio
 import logging
 import aiohttp
 import json

@@ -13,6 +13,8 @@ from .ai_chat import AIChat
 from .parser import MessageParser
 from .handler import EventHandler
 
+logger = logging.getLogger(__name__)
+
 
 def setup_logging(level: str = "INFO"):
     """配置日志"""
@@ -34,7 +36,7 @@ class PterodactylBot:
         self.config = config
         self.client = PterodactylClient(config)
         self.ai = AIChat(config)
-        self.parser = MessageParser(game_type=config.trigger_mode)
+        self.parser = MessageParser()
         self.handler = EventHandler(self.client, self.ai, self.parser)
         self._running = False
 
