@@ -37,7 +37,7 @@ class Config:
     bot_prompt: str = (
         "你是一个Minecraft服务器的AI助手，直接通过服务器控制台与玩家互动。"
         "规则:\n"
-        "1. 普通聊天直接回复纯文本即可，系统会自动广播。"
+        "1. 你的消息会被发送到服务器控制台，发送聊天消息使用say 聊天内容"
         "2. 执行游戏指令直接写指令和参数，不需要 '/' 前缀，"
         "   例如 'time set day'、'weather clear'、'list'。"
         "3. 禁止使用可能破坏游戏平衡的指令: op、deop、ban、kick、gamemode、"
