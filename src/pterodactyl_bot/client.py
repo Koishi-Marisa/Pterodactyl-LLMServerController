@@ -97,9 +97,18 @@ class PterodactylClient:
         else:
             logger.warning("WebSocket 未连接，无法发送命令")
 
-    async def send_say(self, message: str):
-        """发送 say 命令（支持 Minecraft / Palworld 等常见服务器）"""
-        await self.send_command(f'say {message}')
+    async def send_console(self, text: str):
+        """
+        发送内容到服务器控制台
+
+        如果 text 以 '/' 开头，直接作为指令发送；
+        否则自动包装为 say 指令发送。
+        """
+        text = text.strip()
+        if text.startswith("/") or text.startswith("!"):
+            await self.send_command(text[1:] if text.startswith("/") else text)
+        else:
+            await self.send_command(f"say {text}")
 
     # ── WebSocket 方法 ──
 

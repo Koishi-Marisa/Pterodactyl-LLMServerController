@@ -10,6 +10,7 @@ import time
 from .client import PterodactylClient
 from .ai_chat import AIChat
 from .parser import MessageParser, ChatMessage, parse_console_ai
+from .command_filter import filter_command
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +58,7 @@ class EventHandler:
                     "_auto_chat", self.config.auto_chat_prompt
                 )
                 if reply:
-                    clean = reply.replace("\n", " ").replace("\r", "")
-                    if len(clean) > 100:
-                        clean = clean[:100]
-                    await self.client.send_say(clean)
-                    logger.info(f"[定时活跃] {clean}")
+                    await self._send_ai_reply(reply, "_auto_chat")
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -73,7 +70,7 @@ class EventHandler:
         处理一条 WebSocket 消息
 
         Args:
-            data: 解析后的 JSON 消息 {"event": "...", "args": [...]}
+            data: 解析后的 JSON消息 {"event": "...", "args": [...]}
         """
         event = data.get("event", "")
         args = data.get("args", [])
@@ -90,7 +87,7 @@ class EventHandler:
             msg = self.config.connect_success_message
             if msg:
                 try:
-                    await self.client.send_say(msg)
+                    await self.client.send_console(msg)
                     logger.info(f"连接成功消息已发送: {msg}")
                 except Exception as e:
                     logger.error(f"发送连接成功消息失败: {e}")
@@ -147,11 +144,7 @@ class EventHandler:
         try:
             reply = await self.ai.chat("_console", message)
             if reply:
-                clean_reply = reply.replace("\n", " ").replace("\r", "")
-                if len(clean_reply) > 200:
-                    clean_reply = clean_reply[:200]
-                await self.client.send_say(clean_reply)
-                logger.info(f"[控制台AI回复] {clean_reply}")
+                await self._send_ai_reply(reply, "_console")
         except Exception as e:
             logger.error(f"控制台 AI 回复异常: {e}", exc_info=True)
 
@@ -160,13 +153,39 @@ class EventHandler:
         try:
             reply = await self.ai.chat(player, message)
             if reply:
-                clean_reply = reply.replace("\n", " ").replace("\r", "")
-                if len(clean_reply) > 200:
-                    clean_reply = clean_reply[:200]
-                await self.client.send_say(clean_reply)
-                logger.info(f"[AI回复] -> {player}: {clean_reply}")
+                await self._send_ai_reply(reply, player)
         except Exception as e:
             logger.error(f"AI 回复异常: {e}", exc_info=True)
+
+    async def _send_ai_reply(self, reply: str, source: str):
+        """
+        发送 AI 回复，支持指令过滤
+
+        如果 AI 回复以 '/' 开头，视为指令，经过安全过滤器后发送；
+        否则视为普通聊天，自动包装为 say 指令发送。
+        """
+        reply = reply.strip()
+        if not reply:
+            return
+
+        # 清理换行符
+        reply = reply.replace("\n", " ").replace("\r", "")
+
+        # 长度限制
+        if len(reply) > 200:
+            reply = reply[:200]
+
+        # 指令安全检查
+        is_safe, reason = filter_command(reply)
+        if not is_safe:
+            # 拦截危险指令，改为发送警告
+            await self.client.send_console(f"[安全警告] {reason}")
+            logger.warning(f"[指令拦截] 来源={source}: {reason}")
+            return
+
+        # 发送（send_console 会自动判断是否为指令）
+        await self.client.send_console(reply)
+        logger.info(f"[AI回复] 来源={source}: {reply}")
 
     # ── 触发条件与冷却 ──
 
@@ -210,17 +229,17 @@ class EventHandler:
 
         if command == "ai-clear":
             self.ai.clear_history(chat_msg.player)
-            await self.client.send_say(
+            await self.client.send_console(
                 f"已清除与 {chat_msg.player} 的对话记录。"
             )
         elif command == "ai-status":
-            await self.client.send_say(
+            await self.client.send_console(
                 f"运行中，已记录 {len(self.ai._history)} 位玩家的对话。"
             )
         elif command == "ai-ignore":
             pass
         elif command == "ai-help":
-            await self.client.send_say(
+            await self.client.send_console(
                 "可用命令: !ai-clear(清除记录) !ai-status(查看状态) !ai-help(帮助)"
             )
 

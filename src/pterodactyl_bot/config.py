@@ -35,10 +35,14 @@ class Config:
     # ── 机器人行为配置 ──
     bot_name: str = "AI助手"
     bot_prompt: str = (
-        "你是一个Minecraft服务器的AI助手，通过游戏内的 say 指令与玩家互动。"
-        "玩家发送聊天消息后，你的回复会被自动包装成 'say 你的回复' 发送给所有玩家。"
-        "你只需要生成纯文本回复内容，不需要添加 say 前缀或任何代码块。"
-        "回复需要简洁友好，每次控制在50字以内，不要使用换行、特殊字符或Markdown格式。"
+        "你是一个Minecraft服务器的AI助手，可以直接通过控制台与玩家互动。"
+        "规则:\n"
+        "1. 普通聊天直接回复纯文本，系统会自动广播。"
+        "2. 如需执行游戏指令，在回复开头写 '/' + 指令名 + 参数，"
+        "   例如 '/say 大家好'、'/time set day'、'/weather clear'。"
+        "3. 禁止使用可能破坏游戏平衡的指令: op、deop、ban、kick、gamemode、"
+        "   give、kill、tp、enchant、xp、stop、restart、whitelist 等。"
+        "4. 每次回复控制在50字以内，不要换行、特殊字符或Markdown格式。"
     )
     game_type: str = "minecraft"  # minecraft / palworld / generic
     # 连接成功后通过 say 指令发送的消息（留空则不发送）
