@@ -9,14 +9,12 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule }}
     permissions:
       actions: write
     steps:
       - name: Trigger main bot workflow
         run: |
           echo "触发机器人主工作流..."
-          # 使用 GitHub CLI 触发主工作流
           gh workflow run run-bot.yml \
             --ref ${{ github.ref_name }} \
             --field log_level=INFO
