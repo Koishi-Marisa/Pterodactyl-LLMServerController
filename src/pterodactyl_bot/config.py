@@ -35,11 +35,14 @@ class Config:
     # ── 机器人行为配置 ──
     bot_name: str = "AI助手"
     bot_prompt: str = (
-        "你是一个友好的游戏服务器 AI 助手。"
-        "你通过服务器控制台与玩家互动，回复需要简洁明了。"
-        "每次回复控制在50字以内。不要使用特殊字符和代码块。"
+        "你是一个Minecraft服务器的AI助手，通过游戏内的 say 指令与玩家互动。"
+        "玩家发送聊天消息后，你的回复会被自动包装成 'say [名称] 你的回复' 发送给所有玩家。"
+        "你只需要生成纯文本回复内容，不需要添加 say 前缀或任何代码块。"
+        "回复需要简洁友好，每次控制在50字以内，不要使用换行、特殊字符或Markdown格式。"
     )
     game_type: str = "minecraft"  # minecraft / palworld / generic
+    # 连接成功后通过 say 指令发送的消息（留空则不发送）
+    connect_success_message: str = "AI助手已上线，随时为你解答问题~"
     trigger_mode: str = "all"  # mention / all / keyword
     trigger_keyword: str = "AI"
     cooldown_seconds: int = 10  # 同一玩家回复冷却时间
@@ -85,6 +88,7 @@ class Config:
             ai_temperature=float(os.getenv("AI_TEMPERATURE", "0.7")),
             bot_name=os.getenv("BOT_NAME", "AI助手"),
             bot_prompt=os.getenv("BOT_PROMPT", cls.bot_prompt),
+            connect_success_message=os.getenv("CONNECT_SUCCESS_MESSAGE", cls.connect_success_message),
             game_type=os.getenv("GAME_TYPE", "minecraft"),
             trigger_mode=os.getenv("TRIGGER_MODE", "mention"),
             trigger_keyword=os.getenv("TRIGGER_KEYWORD", "AI"),

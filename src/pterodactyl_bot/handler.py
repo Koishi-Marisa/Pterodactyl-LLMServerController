@@ -42,6 +42,14 @@ class EventHandler:
             self._handle_status(args)
         elif event == "auth success":
             logger.info("WebSocket 认证成功")
+            # 发送连接成功消息（如果配置了）
+            msg = self.config.connect_success_message
+            if msg:
+                try:
+                    await self.client.send_say(msg)
+                    logger.info(f"连接成功消息已发送: {msg}")
+                except Exception as e:
+                    logger.error(f"发送连接成功消息失败: {e}")
         elif event == "jwt error":
             logger.error(f"JWT 认证错误: {args}")
         elif event == "throttled":
