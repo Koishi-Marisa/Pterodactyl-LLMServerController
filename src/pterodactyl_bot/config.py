@@ -20,7 +20,7 @@ class Config:
     ai_provider: str = "zhipu"
     ai_api_url: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
     ai_api_key: str = ""
-    ai_model: str = "glm-4.7-flash"
+    ai_model: str = "glm-4-flash"
     ai_max_tokens: int = 300
     ai_temperature: float = 0.7
 
