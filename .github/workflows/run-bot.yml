@@ -1,0 +1,83 @@
+name: Run Pterodactyl AI Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: "日志级别 (DEBUG/INFO/WARNING/ERROR)"
+        required: false
+        default: "INFO"
+        type: choice
+        options:
+          - DEBUG
+          - INFO
+          - WARNING
+          - ERROR
+
+env:
+  # ── 翼龙面板配置 ──
+  PTERODACTYL_PANEL_URL: ${{ secrets.PTERODACTYL_PANEL_URL }}
+  PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+  PTERODACTYL_SERVER_ID: ${{ secrets.PTERODACTYL_SERVER_ID }}
+
+  # ── AI 配置 ──
+  AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'openai' }}
+  AI_API_URL: ${{ secrets.AI_API_URL || 'https://api.openai.com/v1/chat/completions' }}
+  AI_API_KEY: ${{ secrets.AI_API_KEY }}
+  AI_MODEL: ${{ secrets.AI_MODEL || 'gpt-4o-mini' }}
+  AI_MAX_TOKENS: ${{ secrets.AI_MAX_TOKENS || '300' }}
+  AI_TEMPERATURE: ${{ secrets.AI_TEMPERATURE || '0.7' }}
+
+  # ── 机器人行为配置 ──
+  BOT_NAME: ${{ secrets.BOT_NAME || 'AI助手' }}
+  BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个友好的游戏服务器 AI 助手。你通过服务器控制台与玩家互动，回复需要简洁明了。每次回复控制在50字以内。不要使用特殊字符和代码块。' }}
+  TRIGGER_MODE: ${{ secrets.TRIGGER_MODE || 'mention' }}
+  TRIGGER_KEYWORD: ${{ secrets.TRIGGER_KEYWORD || 'AI' }}
+  COOLDOWN_SECONDS: ${{ secrets.COOLDOWN_SECONDS || '10' }}
+  COMMAND_PREFIX: ${{ secrets.COMMAND_PREFIX || '!' }}
+
+  # ── 连接配置 ──
+  WS_RECONNECT_DELAY: "5"
+  LOG_LEVEL: ${{ github.event.inputs.log_level || 'INFO' }}
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 小时自动超时（GitHub Actions 最长限制）
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --break-system-packages aiohttp>=3.9.0
+
+      - name: Validate configuration
+        run: |
+          echo "检查必要的环境变量..."
+          MISSING=""
+          [ -z "$PTERODACTYL_PANEL_URL" ] && MISSING="$MISSING PTERODACTYL_PANEL_URL"
+          [ -z "$PTERODACTYL_API_KEY" ] && MISSING="$MISSING PTERODACTYL_API_KEY"
+          [ -z "$PTERODACTYL_SERVER_ID" ] && MISSING="$MISSING PTERODACTYL_SERVER_ID"
+          [ -z "$AI_API_KEY" ] && MISSING="$MISSING AI_API_KEY"
+          if [ -n "$MISSING" ]; then
+            echo "::error::缺少必要的环境变量:$MISSING"
+            echo "请在仓库 Settings -> Secrets and variables -> Actions 中配置。"
+            exit 1
+          fi
+          echo "配置验证通过"
+          echo "面板: $PTERODACTYL_PANEL_URL"
+          echo "服务器: $PTERODACTYL_SERVER_ID"
+          echo "AI模型: $AI_MODEL"
+          echo "触发模式: $TRIGGER_MODE"
+
+      - name: Run AI Bot
+        run: |
+          echo "启动翼龙面板 AI 聊天机器人..."
+          echo "按 Ctrl+C 或等待 6 小时自动停止"
+          PYTHONPATH=src python -m pterodactyl_bot.main

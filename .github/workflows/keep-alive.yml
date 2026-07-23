@@ -1,0 +1,24 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # 每 6 小时重新触发一次（避免 GitHub Actions 超时）
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule }}
+    permissions:
+      actions: write
+    steps:
+      - name: Trigger main bot workflow
+        run: |
+          echo "触发机器人主工作流..."
+          # 使用 GitHub CLI 触发主工作流
+          gh workflow run run-bot.yml \
+            --ref ${{ github.ref_name }} \
+            --field log_level=INFO
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
