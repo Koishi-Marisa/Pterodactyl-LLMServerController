@@ -57,7 +57,7 @@ class TestAIChat:
 
             result = await ai.chat("Steve", "测试")
 
-        assert "[TestBot]" in result
+        assert result == ""
 
     @pytest.mark.asyncio
     async def test_history_management(self, ai):

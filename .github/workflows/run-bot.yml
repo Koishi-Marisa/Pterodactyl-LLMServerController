@@ -43,6 +43,12 @@ env:
   AUTO_CHAT_INTERVAL: ${{ secrets.AUTO_CHAT_INTERVAL || '600' }}
   AUTO_CHAT_PROMPT: "${{ secrets.AUTO_CHAT_PROMPT || '生成一句活跃服务器气氛的文本，可以是一个冷笑话、有趣的小知识或温馨问候语。直接输出内容，不要有任何前缀、说明或代码块。控制在30字以内。' }}"
 
+  # ── 联网搜索配置 ──
+  SEARCH_ENABLED: ${{ secrets.SEARCH_ENABLED || '0' }}
+  SEARCH_PROVIDER: ${{ secrets.SEARCH_PROVIDER || 'duckduckgo' }}
+  SEARCH_API_KEY: ${{ secrets.SEARCH_API_KEY || '' }}
+  SEARCH_MAX_RESULTS: ${{ secrets.SEARCH_MAX_RESULTS || '3' }}
+
   # ── 连接配置 ──
   WS_RECONNECT_DELAY: "5"
   LOG_LEVEL: ${{ github.event.inputs.log_level || 'INFO' }}

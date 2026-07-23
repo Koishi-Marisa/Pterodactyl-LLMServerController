@@ -1,11 +1,14 @@
 """
 AI 聊天模块
 支持 OpenAI 兼容 API（OpenAI / DeepSeek / Ollama / 自定义端点）
+可选集成联网搜索，在调用 AI 前先检索最新信息
 """
 import asyncio
 import logging
 import aiohttp
 import json
+
+from .search import web_search
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,12 @@ class AIChat:
         self.temperature = config.ai_temperature
         self.system_prompt = config.bot_prompt
 
+        # 搜索配置
+        self.search_enabled = config.search_enabled
+        self.search_provider = config.search_provider
+        self.search_api_key = config.search_api_key
+        self.search_max_results = config.search_max_results
+
         # 玩家对话历史 {player_name: [{"role": "user/assistant", "content": "..."}]}
         self._history: dict[str, list[dict]] = {}
 
@@ -36,8 +45,31 @@ class AIChat:
         """裁剪过长的对话历史"""
         history = self._history.get(player, [])
         if len(history) > MAX_HISTORY_PER_PLAYER * 2:
-            # 保留最近的对话
             self._history[player] = history[-(MAX_HISTORY_PER_PLAYER * 2) :]
+
+    async def _do_search(self, message: str) -> str:
+        """
+        根据玩家消息进行联网搜索
+
+        Returns:
+            搜索结果摘要文本，失败返回空字符串
+        """
+        if not self.search_enabled:
+            return ""
+
+        try:
+            result = await web_search(
+                query=message,
+                provider=self.search_provider,
+                api_key=self.search_api_key,
+                max_results=self.search_max_results,
+            )
+            if result:
+                logger.info(f"[搜索] 获取到结果: {len(result)} 字符")
+            return result
+        except Exception as e:
+            logger.warning(f"联网搜索异常: {e}")
+            return ""
 
     async def chat(self, player: str, message: str) -> str:
         """
@@ -56,8 +88,20 @@ class AIChat:
         messages = [
             {"role": "system", "content": self.system_prompt},
             *history,
-            {"role": "user", "content": f"[{player}] 说: {message}"},
         ]
+
+        # 联网搜索增强
+        search_context = await self._do_search(message)
+        if search_context:
+            user_content = (
+                f"[参考信息]\n{search_context}\n"
+                f"[参考信息结束]\n"
+                f"[{player}] 说: {message}"
+            )
+        else:
+            user_content = f"[{player}] 说: {message}"
+
+        messages.append({"role": "user", "content": user_content})
 
         try:
             headers = {
@@ -83,7 +127,7 @@ class AIChat:
                         logger.error(
                             f"AI API 请求失败 (HTTP {resp.status}): {error_text}"
                         )
-                        return f"[{self.config.bot_name}] 抱歉，我现在有点忙，稍后再试。"
+                        return ""
 
                     data = await resp.json()
                     reply = (
@@ -96,7 +140,7 @@ class AIChat:
                     if not reply:
                         return ""
 
-                    # 更新对话历史
+                    # 更新对话历史（只记录原始玩家消息，不含搜索结果）
                     history.append({"role": "user", "content": message})
                     history.append({"role": "assistant", "content": reply})
                     self._trim_history(player)
@@ -105,10 +149,10 @@ class AIChat:
 
         except asyncio.TimeoutError:
             logger.error("AI API 请求超时")
-            return f"[{self.config.bot_name}] 思考太久啦，请再说一遍。"
+            return ""
         except Exception as e:
             logger.error(f"AI 聊天异常: {e}")
-            return f"[{self.config.bot_name}] 出了点问题，稍后再试。"
+            return ""
 
     def clear_history(self, player: str = None):
         """清除对话历史"""

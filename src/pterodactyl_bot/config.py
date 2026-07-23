@@ -63,6 +63,16 @@ class Config:
         "控制在30字以内。"
     )
 
+    # ── 联网搜索配置 ──
+    # 是否启用联网搜索
+    search_enabled: bool = False
+    # 搜索引擎: duckduckgo(免费) / tavily(需API Key)
+    search_provider: str = "duckduckgo"
+    # 搜索 API Key（Tavily 需要）
+    search_api_key: str = ""
+    # 每次搜索返回的最大结果数
+    search_max_results: int = 3
+
     # ── 连接配置 ──
     ws_reconnect_delay: int = 5  # 断线重连延迟(秒)
     ws_token_refresh_interval: int = 480  # token 刷新间隔(秒)，JWT 有效期 10 分钟
@@ -112,6 +122,10 @@ class Config:
             auto_chat_enabled=os.getenv("AUTO_CHAT_ENABLED", "0") == "1",
             auto_chat_interval=int(os.getenv("AUTO_CHAT_INTERVAL", "600")),
             auto_chat_prompt=os.getenv("AUTO_CHAT_PROMPT", cls.auto_chat_prompt),
+            search_enabled=os.getenv("SEARCH_ENABLED", "0") == "1",
+            search_provider=os.getenv("SEARCH_PROVIDER", "duckduckgo"),
+            search_api_key=os.getenv("SEARCH_API_KEY", ""),
+            search_max_results=int(os.getenv("SEARCH_MAX_RESULTS", "3")),
             ws_reconnect_delay=int(os.getenv("WS_RECONNECT_DELAY", "5")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
         )

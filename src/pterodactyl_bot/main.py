@@ -54,6 +54,10 @@ class PterodactylBot:
             logger.info(
                 f"定时活跃气氛: 已启用，间隔 {self.config.auto_chat_interval} 秒"
             )
+        if self.config.search_enabled:
+            logger.info(
+                f"联网搜索: 已启用 ({self.config.search_provider})"
+            )
         logger.info("=" * 50)
 
         self._running = True
