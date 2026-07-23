@@ -99,7 +99,7 @@ class PterodactylClient:
 
     async def send_say(self, message: str):
         """发送 say 命令（支持 Minecraft / Palworld 等常见服务器）"""
-        await self.send_command(f'say [{self.config.bot_name}] {message}')
+        await self.send_command(f'say {message}')
 
     # ── WebSocket 方法 ──
 
