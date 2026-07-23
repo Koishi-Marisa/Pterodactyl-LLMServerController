@@ -50,7 +50,7 @@ class Config:
 
     # ── 定时活跃气氛配置 ──
     # 是否启用定时活跃气氛（0=禁用，1=启用）
-    auto_chat_enabled: bool = False
+    auto_chat_enabled: bool = True
     # 定时发送间隔（秒），默认 600 秒 = 10 分钟
     auto_chat_interval: int = 600
     # 定时活跃气氛的 AI 提示词
