@@ -50,6 +50,10 @@ class PterodactylBot:
         logger.info(f"AI 模型: {self.config.ai_model}")
         logger.info(f"触发模式: {self.config.trigger_mode}")
         logger.info(f"机器人名称: {self.config.bot_name}")
+        if self.config.auto_chat_enabled:
+            logger.info(
+                f"定时活跃气氛: 已启用，间隔 {self.config.auto_chat_interval} 秒"
+            )
         logger.info("=" * 50)
 
         self._running = True

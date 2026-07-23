@@ -53,11 +53,33 @@ PALWORLD_PATTERNS = [
     ),
 ]
 
-# ── 通用聊天格式 ──
+# ── 控制台 @AI 调试指令 ──
+# 匹配包含 @AI 的控制台输出，提取后面的消息
+# 格式: @AI 消息内容
+CONSOLE_AI_PATTERN = re.compile(r"@AI\s+(.+)", re.IGNORECASE)
 # PlayerName: message
 GENERIC_PATTERNS = [
     re.compile(r"^(\S+?):\s+(.*)"),
 ]
+
+
+def parse_console_ai(raw_line: str) -> str | None:
+    """
+    检测控制台 @AI 调试指令，提取消息内容
+
+    用法: 在 Pterodactyl 控制台输入 @AI 测试消息
+    例如: @AI 说一个冷笑话
+
+    Args:
+        raw_line: 控制台原始输出
+
+    Returns:
+        提取的消息内容，或 None（非 @AI 指令）
+    """
+    match = CONSOLE_AI_PATTERN.search(raw_line.strip())
+    if match:
+        return match.group(1).strip()
+    return None
 
 
 class MessageParser:

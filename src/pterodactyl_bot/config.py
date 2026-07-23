@@ -48,6 +48,18 @@ class Config:
     cooldown_seconds: int = 10  # 同一玩家回复冷却时间
     command_prefix: str = "!"  # 管理员命令前缀
 
+    # ── 定时活跃气氛配置 ──
+    # 是否启用定时活跃气氛（0=禁用，1=启用）
+    auto_chat_enabled: bool = False
+    # 定时发送间隔（秒），默认 600 秒 = 10 分钟
+    auto_chat_interval: int = 600
+    # 定时活跃气氛的 AI 提示词
+    auto_chat_prompt: str = (
+        "生成一句活跃服务器气氛的文本，可以是一个冷笑话、有趣的小知识"
+        "或温馨问候语。直接输出内容，不要有任何前缀、说明或代码块。"
+        "控制在30字以内。"
+    )
+
     # ── 连接配置 ──
     ws_reconnect_delay: int = 5  # 断线重连延迟(秒)
     ws_token_refresh_interval: int = 480  # token 刷新间隔(秒)，JWT 有效期 10 分钟
@@ -94,6 +106,9 @@ class Config:
             trigger_keyword=os.getenv("TRIGGER_KEYWORD", "AI"),
             cooldown_seconds=int(os.getenv("COOLDOWN_SECONDS", "10")),
             command_prefix=os.getenv("COMMAND_PREFIX", "!"),
+            auto_chat_enabled=os.getenv("AUTO_CHAT_ENABLED", "0") == "1",
+            auto_chat_interval=int(os.getenv("AUTO_CHAT_INTERVAL", "600")),
+            auto_chat_prompt=os.getenv("AUTO_CHAT_PROMPT", cls.auto_chat_prompt),
             ws_reconnect_delay=int(os.getenv("WS_RECONNECT_DELAY", "5")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
         )

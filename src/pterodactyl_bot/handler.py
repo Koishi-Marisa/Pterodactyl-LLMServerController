@@ -1,6 +1,6 @@
 """
 事件处理模块
-处理 WebSocket 消息，管理聊天交互流程
+处理 WebSocket 消息，管理聊天交互流程、定时活跃气氛、控制台调试
 """
 import asyncio
 import json
@@ -9,7 +9,7 @@ import time
 
 from .client import PterodactylClient
 from .ai_chat import AIChat
-from .parser import MessageParser, ChatMessage
+from .parser import MessageParser, ChatMessage, parse_console_ai
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,50 @@ class EventHandler:
         self.parser = parser
         self.config = client.config
         self._stats_last_print = time.time()
+        self._auto_chat_task: asyncio.Task | None = None
+        self._auto_chat_running = False
+
+    # ── 公开方法 ──
+
+    def start_auto_chat(self):
+        """启动定时活跃气氛任务"""
+        if not self.config.auto_chat_enabled:
+            logger.info("定时活跃气氛已禁用")
+            return
+        if self._auto_chat_running:
+            return
+        self._auto_chat_running = True
+        self._auto_chat_task = asyncio.create_task(self._auto_chat_loop())
+        logger.info(
+            f"定时活跃气氛已启动，间隔 {self.config.auto_chat_interval} 秒"
+        )
+
+    def stop_auto_chat(self):
+        """停止定时活跃气氛任务"""
+        self._auto_chat_running = False
+        if self._auto_chat_task and not self._auto_chat_task.done():
+            self._auto_chat_task.cancel()
+        logger.info("定时活跃气氛已停止")
+
+    async def _auto_chat_loop(self):
+        """定时活跃气氛主循环"""
+        await asyncio.sleep(self.config.auto_chat_interval)
+        while self._auto_chat_running:
+            try:
+                reply = await self.ai.chat(
+                    "_auto_chat", self.config.auto_chat_prompt
+                )
+                if reply:
+                    clean = reply.replace("\n", " ").replace("\r", "")
+                    if len(clean) > 100:
+                        clean = clean[:100]
+                    await self.client.send_say(clean)
+                    logger.info(f"[定时活跃] {clean}")
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"定时活跃气氛异常: {e}", exc_info=True)
+            await asyncio.sleep(self.config.auto_chat_interval)
 
     async def handle_ws_message(self, data: dict):
         """
@@ -50,21 +94,30 @@ class EventHandler:
                     logger.info(f"连接成功消息已发送: {msg}")
                 except Exception as e:
                     logger.error(f"发送连接成功消息失败: {e}")
+            # 启动定时活跃气氛
+            self.start_auto_chat()
         elif event == "jwt error":
             logger.error(f"JWT 认证错误: {args}")
         elif event == "throttled":
             logger.warning(f"消息频率超限: {args}")
 
+    # ── 控制台输出处理 ──
+
     async def _handle_console_output(self, args: list):
-        """处理控制台输出，检测玩家聊天"""
+        """处理控制台输出，检测玩家聊天和 @AI 调试指令"""
         if not args:
             return
 
-        # 翼龙面板 console output 的 args[0] 是文本内容
         text = args[0] if isinstance(args[0], str) else str(args[0])
         logger.debug(f"控制台: {text}")
 
-        # 解析聊天消息
+        # 优先检测 @AI 控制台调试指令
+        console_ai_msg = parse_console_ai(text)
+        if console_ai_msg is not None:
+            await self._handle_console_ai(console_ai_msg)
+            return
+
+        # 解析玩家聊天消息
         chat_msg = self.parser.parse(text)
         if chat_msg is None:
             return
@@ -86,18 +139,36 @@ class EventHandler:
             return
 
         # 调用 AI 获取回复
+        await self._ai_reply(chat_msg.player, chat_msg.message)
+
+    async def _handle_console_ai(self, message: str):
+        """处理控制台 @AI 调试指令，直接将消息发送给 AI"""
+        logger.info(f"[控制台调试] @AI: {message}")
         try:
-            reply = await self.ai.chat(chat_msg.player, chat_msg.message)
+            reply = await self.ai.chat("_console", message)
             if reply:
-                # 清理回复内容（移除换行等控制台不友好的字符）
                 clean_reply = reply.replace("\n", " ").replace("\r", "")
-                # 游戏内通常有字符限制
                 if len(clean_reply) > 200:
                     clean_reply = clean_reply[:200]
                 await self.client.send_say(clean_reply)
-                logger.info(f"[AI回复] -> {chat_msg.player}: {clean_reply}")
+                logger.info(f"[控制台AI回复] {clean_reply}")
+        except Exception as e:
+            logger.error(f"控制台 AI 回复异常: {e}", exc_info=True)
+
+    async def _ai_reply(self, player: str, message: str):
+        """调用 AI 获取回复并发送"""
+        try:
+            reply = await self.ai.chat(player, message)
+            if reply:
+                clean_reply = reply.replace("\n", " ").replace("\r", "")
+                if len(clean_reply) > 200:
+                    clean_reply = clean_reply[:200]
+                await self.client.send_say(clean_reply)
+                logger.info(f"[AI回复] -> {player}: {clean_reply}")
         except Exception as e:
             logger.error(f"AI 回复异常: {e}", exc_info=True)
+
+    # ── 触发条件与冷却 ──
 
     def _should_trigger(self, chat_msg: ChatMessage) -> bool:
         """判断是否应该触发 AI 回复"""
@@ -124,12 +195,13 @@ class EventHandler:
         self.config.player_cooldowns[player] = now
         return True
 
+    # ── 管理员命令 ──
+
     async def _handle_admin_command(self, chat_msg: ChatMessage):
         """处理管理员命令（以 ! 开头）"""
         cmd = chat_msg.message.lower().split()[0] if chat_msg.message else ""
         prefix = self.config.command_prefix
 
-        # 仅识别管理员命令前缀
         if not cmd.startswith(prefix):
             return
 
@@ -137,28 +209,25 @@ class EventHandler:
         logger.info(f"[管理命令] {chat_msg.player}: {command}")
 
         if command == "ai-clear":
-            # 清除该玩家的对话历史
             self.ai.clear_history(chat_msg.player)
             await self.client.send_say(
-                f"[{self.config.bot_name}] 已清除与 {chat_msg.player} 的对话记录。"
+                f"已清除与 {chat_msg.player} 的对话记录。"
             )
         elif command == "ai-status":
             await self.client.send_say(
-                f"[{self.config.bot_name}] 运行中，"
-                f"已记录 {len(self.ai._history)} 位玩家的对话。"
+                f"运行中，已记录 {len(self.ai._history)} 位玩家的对话。"
             )
         elif command == "ai-ignore":
-            # TODO: 添加玩家到忽略列表
             pass
         elif command == "ai-help":
             await self.client.send_say(
-                f"[{self.config.bot_name}] 可用命令: "
-                f"!ai-clear(清除记录) !ai-status(查看状态) !ai-help(帮助)"
+                "可用命令: !ai-clear(清除记录) !ai-status(查看状态) !ai-help(帮助)"
             )
+
+    # ── 服务器状态处理 ──
 
     def _handle_stats(self, args: list):
         """处理服务器统计信息"""
-        # 每 60 秒打印一次统计
         now = time.time()
         if now - self._stats_last_print < 60:
             return

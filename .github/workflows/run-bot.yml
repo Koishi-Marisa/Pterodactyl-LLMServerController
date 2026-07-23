@@ -39,6 +39,11 @@ env:
   COOLDOWN_SECONDS: ${{ secrets.COOLDOWN_SECONDS || '10' }}
   COMMAND_PREFIX: ${{ secrets.COMMAND_PREFIX || '!' }}
 
+  # ── 定时活跃气氛配置 ──
+  AUTO_CHAT_ENABLED: ${{ secrets.AUTO_CHAT_ENABLED || '0' }}
+  AUTO_CHAT_INTERVAL: ${{ secrets.AUTO_CHAT_INTERVAL || '600' }}
+  AUTO_CHAT_PROMPT: ${{ secrets.AUTO_CHAT_PROMPT || '生成一句活跃服务器气氛的文本，可以是一个冷笑话、有趣的小知识或温馨问候语。直接输出内容，不要有任何前缀、说明或代码块。控制在30字以内。' }}
+
   # ── 连接配置 ──
   WS_RECONNECT_DELAY: "5"
   LOG_LEVEL: ${{ github.event.inputs.log_level || 'INFO' }}
@@ -79,6 +84,9 @@ jobs:
           echo "游戏类型: $GAME_TYPE"
           echo "AI模型: $AI_MODEL"
           echo "触发模式: $TRIGGER_MODE"
+          if [ "$AUTO_CHAT_ENABLED" = "1" ]; then
+            echo "定时活跃气氛: 已启用，间隔 ${AUTO_CHAT_INTERVAL}s"
+          fi
 
       - name: Run AI Bot
         run: |
