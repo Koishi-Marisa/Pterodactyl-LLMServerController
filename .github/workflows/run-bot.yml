@@ -48,6 +48,12 @@ env:
   WS_RECONNECT_DELAY: "5"
   LOG_LEVEL: ${{ github.event.inputs.log_level || 'INFO' }}
 
+# 并发控制：同一时刻只允许一个实例运行
+# 新实例启动时，自动取消旧实例
+concurrency:
+  group: pterodactyl-ai-bot
+  cancel-in-progress: true
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest

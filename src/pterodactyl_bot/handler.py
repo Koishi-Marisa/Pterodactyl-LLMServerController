@@ -119,6 +119,11 @@ class EventHandler:
         if chat_msg is None:
             return
 
+        # 过滤机器人自己的消息，避免死循环
+        if chat_msg.player.lower() == self.config.bot_name.lower():
+            logger.debug(f"忽略机器人自己的消息: {chat_msg.message}")
+            return
+
         logger.info(f"[聊天] {chat_msg.player}: {chat_msg.message}")
 
         # 检查是否是管理员命令
