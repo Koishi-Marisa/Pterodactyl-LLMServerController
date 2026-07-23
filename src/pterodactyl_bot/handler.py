@@ -87,7 +87,7 @@ class EventHandler:
             msg = self.config.connect_success_message
             if msg:
                 try:
-                    await self.client.send_console(msg)
+                    await self.client.send_say(msg)
                     logger.info(f"连接成功消息已发送: {msg}")
                 except Exception as e:
                     logger.error(f"发送连接成功消息失败: {e}")
@@ -157,12 +157,21 @@ class EventHandler:
         except Exception as e:
             logger.error(f"AI 回复异常: {e}", exc_info=True)
 
+    # 不需要自动加 say 的安全指令
+    SAFE_COMMANDS = frozenset({
+        "say", "time", "weather", "list", "help", "me", "msg", "tell", "w",
+        "broadcast", "seed", "save-all", "difficulty", "gamerule",
+    })
+
     async def _send_ai_reply(self, reply: str, source: str):
         """
-        发送 AI 回复，支持指令过滤
+        发送 AI 回复，支持指令过滤和自动包装
 
-        如果 AI 回复以 '/' 开头，视为指令，经过安全过滤器后发送；
-        否则视为普通聊天，自动包装为 say 指令发送。
+        控制台指令不需要 '/' 前缀。
+        - 如果 AI 回复以 'say ' 开头，直接发送
+        - 如果 AI 回复以其他已知安全指令开头，直接发送
+        - 否则自动包装为 'say 回复内容' 发送
+        - 危险指令会被拦截并改为发送安全警告
         """
         reply = reply.strip()
         if not reply:
@@ -175,17 +184,31 @@ class EventHandler:
         if len(reply) > 200:
             reply = reply[:200]
 
-        # 指令安全检查
-        is_safe, reason = filter_command(reply)
-        if not is_safe:
-            # 拦截危险指令，改为发送警告
-            await self.client.send_console(f"[安全警告] {reason}")
-            logger.warning(f"[指令拦截] 来源={source}: {reason}")
+        # 提取第一个词
+        cmd = reply.split(None, 1)[0].lower() if reply else ""
+
+        # 指令安全检查（只检查看起来像指令的内容）
+        if cmd in self.SAFE_COMMANDS or cmd in self._dangerous_commands():
+            is_safe, reason = filter_command(reply)
+            if not is_safe:
+                # 拦截危险指令，改为发送警告
+                await self.client.send_say(f"[安全警告] {reason}")
+                logger.warning(f"[指令拦截] 来源={source}: {reason}")
+                return
+            # 安全指令直接发送
+            await self.client.send_command(reply)
+            logger.info(f"[AI回复] 来源={source}: {reply}")
             return
 
-        # 发送（send_console 会自动判断是否为指令）
-        await self.client.send_console(reply)
-        logger.info(f"[AI回复] 来源={source}: {reply}")
+        # 普通聊天，自动加 say
+        await self.client.send_say(reply)
+        logger.info(f"[AI回复] 来源={source}: say {reply}")
+
+    @staticmethod
+    def _dangerous_commands() -> set:
+        """获取危险指令集合（延迟导入避免循环依赖）"""
+        from .command_filter import DANGEROUS_COMMANDS
+        return DANGEROUS_COMMANDS
 
     # ── 触发条件与冷却 ──
 
@@ -229,17 +252,17 @@ class EventHandler:
 
         if command == "ai-clear":
             self.ai.clear_history(chat_msg.player)
-            await self.client.send_console(
+            await self.client.send_say(
                 f"已清除与 {chat_msg.player} 的对话记录。"
             )
         elif command == "ai-status":
-            await self.client.send_console(
+            await self.client.send_say(
                 f"运行中，已记录 {len(self.ai._history)} 位玩家的对话。"
             )
         elif command == "ai-ignore":
             pass
         elif command == "ai-help":
-            await self.client.send_console(
+            await self.client.send_say(
                 "可用命令: !ai-clear(清除记录) !ai-status(查看状态) !ai-help(帮助)"
             )
 

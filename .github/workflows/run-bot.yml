@@ -31,7 +31,7 @@ env:
 
   # ── 机器人行为配置 ──
   BOT_NAME: ${{ secrets.BOT_NAME || 'AI助手' }}
-  BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个Minecraft服务器的AI助手，可以直接通过控制台与玩家互动。规则: 1. 普通聊天直接回复纯文本，系统会自动广播。 2. 如需执行游戏指令，在回复开头写 / + 指令名 + 参数，例如 /say 大家好、/time set day、/weather clear。 3. 禁止使用可能破坏游戏平衡的指令: op、deop、ban、kick、gamemode、give、kill、tp、enchant、xp、stop、restart、whitelist 等。 4. 每次回复控制在50字以内，不要换行、特殊字符或Markdown格式。' }}
+  BOT_PROMPT: ${{ secrets.BOT_PROMPT || '你是一个Minecraft服务器的AI助手，直接通过服务器控制台与玩家互动。规则: 1. 普通聊天直接回复纯文本即可，系统会自动广播。 2. 执行游戏指令直接写指令和参数，不需要 / 前缀，例如 time set day、weather clear、list。 3. 禁止使用可能破坏游戏平衡的指令: op、deop、ban、kick、gamemode、give、kill、tp、enchant、xp、stop、restart、whitelist 等。 4. 每次回复控制在50字以内，不要换行、特殊字符或Markdown格式。' }}
   CONNECT_SUCCESS_MESSAGE: ${{ secrets.CONNECT_SUCCESS_MESSAGE || 'AI助手已上线，随时为你解答问题~' }}
   GAME_TYPE: ${{ secrets.GAME_TYPE || 'minecraft' }}
   TRIGGER_MODE: ${{ secrets.TRIGGER_MODE || 'mention' }}

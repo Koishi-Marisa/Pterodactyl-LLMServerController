@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ── 危险指令黑名单 ──
-# 匹配命令前缀即可，例如 "op" 匹配 "/op Steve"
+# 匹配命令第一个词即可，例如 "op" 匹配 "op Steve"
 DANGEROUS_COMMANDS = frozenset(
     {
         # 权限管理
@@ -40,11 +40,11 @@ DANGEROUS_COMMANDS = frozenset(
         "tpaccept",
         "tpdeny",
         "tphere",
-        # 世界控制
-        "time",
-        "weather",
-        "difficulty",
-        "gamerule",
+        # 世界控制（环境指令，不算破坏平衡，放行）
+        # "time",
+        # "weather",
+        # "difficulty",
+        # "gamerule",
         # 服务器控制
         "stop",
         "restart",
@@ -75,23 +75,17 @@ def extract_command(raw: str) -> str:
     """
     从 AI 回复中提取指令名
 
-    支持的格式:
-        /command args...  → 返回 command
-        !command args...  → 返回 command
-        //command args...  → 返回 //command (WorldEdit)
+    控制台指令不需要 '/' 前缀，直接取第一个词即可。
+    例如 "say Hello" → "say", "time set day" → "time"
     """
     raw = raw.strip()
+    if not raw:
+        return ""
     # WorldEdit 双斜杠指令
     if raw.startswith("//"):
         return "//"
-    if raw.startswith("/"):
-        # 去掉开头的 /，取第一个词
-        parts = raw[1:].strip().split(None, 1)
-        return parts[0].lower() if parts else ""
-    if raw.startswith("!"):
-        parts = raw[1:].strip().split(None, 1)
-        return parts[0].lower() if parts else ""
-    return ""
+    parts = raw.split(None, 1)
+    return parts[0].lower() if parts else ""
 
 
 def is_dangerous(command: str) -> bool:
@@ -110,13 +104,13 @@ def filter_command(ai_reply: str) -> tuple[bool, str]:
     """
     cmd = extract_command(ai_reply)
     if not cmd:
-        # 不是指令，认为是普通聊天，安全
+        # 空内容，安全
         return True, ""
 
     if is_dangerous(cmd):
-        reason = f"危险指令 '/{cmd}' 已被拦截，禁止执行"
+        reason = f"危险指令 '{cmd}' 已被拦截，禁止执行"
         logger.warning(f"[指令拦截] {reason}")
         return False, reason
 
-    logger.info(f"[指令放行] /{cmd}")
+    logger.info(f"[指令放行] {cmd}")
     return True, ""

@@ -8,23 +8,27 @@ from pterodactyl_bot.command_filter import (
 
 
 class TestExtractCommand:
-    def test_slash_command(self):
-        assert extract_command("/say Hello") == "say"
-        assert extract_command("/time set day") == "time"
-        assert extract_command("/weather clear") == "weather"
+    def test_plain_command(self):
+        assert extract_command("say Hello") == "say"
+        assert extract_command("time set day") == "time"
+        assert extract_command("weather clear") == "weather"
+        assert extract_command("list") == "list"
 
-    def test_exclamation_command(self):
-        assert extract_command("!help") == "help"
-        assert extract_command("!list players") == "list"
+    def test_worldedit_command(self):
+        assert extract_command("//set stone") == "//"
+        assert extract_command("//replace dirt stone") == "//"
 
-    def test_no_command(self):
-        assert extract_command("Hello world") == ""
-        assert extract_command("  ") == ""
+    def test_chat_text(self):
+        # 普通聊天文本也会提取第一个词
+        assert extract_command("Hello world") == "hello"
+
+    def test_empty(self):
         assert extract_command("") == ""
+        assert extract_command("  ") == ""
 
     def test_case_insensitive(self):
-        assert extract_command("/SAY hello") == "say"
-        assert extract_command("/Time set day") == "time"
+        assert extract_command("SAY hello") == "say"
+        assert extract_command("Time set day") == "time"
 
 
 class TestIsDangerous:
@@ -41,10 +45,11 @@ class TestIsDangerous:
 
     def test_safe_commands(self):
         assert is_dangerous("say") is False
+        assert is_dangerous("time") is False
+        assert is_dangerous("weather") is False
         assert is_dangerous("list") is False
         assert is_dangerous("help") is False
-        assert is_dangerous("me") is False
-        assert is_dangerous("msg") is False
+        assert is_dangerous("hello") is False
 
 
 class TestFilterCommand:
@@ -53,23 +58,28 @@ class TestFilterCommand:
         assert is_safe is True
         assert reason == ""
 
-    def test_safe_command(self):
-        is_safe, reason = filter_command("/say Hello")
+    def test_safe_say_command(self):
+        is_safe, reason = filter_command("say Hello everyone")
+        assert is_safe is True
+        assert reason == ""
+
+    def test_safe_time_command(self):
+        is_safe, reason = filter_command("time set day")
         assert is_safe is True
         assert reason == ""
 
     def test_blocked_op(self):
-        is_safe, reason = filter_command("/op Steve")
+        is_safe, reason = filter_command("op Steve")
         assert is_safe is False
         assert "op" in reason
 
     def test_blocked_ban(self):
-        is_safe, reason = filter_command("/ban BadPlayer")
+        is_safe, reason = filter_command("ban BadPlayer")
         assert is_safe is False
         assert "ban" in reason
 
     def test_blocked_gamemode(self):
-        is_safe, reason = filter_command("/gamemode creative Steve")
+        is_safe, reason = filter_command("gamemode creative Steve")
         assert is_safe is False
         assert "gamemode" in reason
 
