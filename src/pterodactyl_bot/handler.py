@@ -5,6 +5,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 
 from .client import PterodactylClient
@@ -157,12 +158,16 @@ class EventHandler:
         except Exception as e:
             logger.error(f"AI 回复异常: {e}", exc_info=True)
 
+    # 检测内容是否主要是中文/日文/韩文等非 ASCII 文字（非指令）
+    _TEXT_PATTERN = re.compile(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]')
+
     async def _send_ai_reply(self, reply: str, source: str):
         """
-        发送 AI 回复，只做危险指令拦截
+        发送 AI 回复，辅助检测 + 危险指令拦截
 
-        AI 自行决定回复内容，包括是否添加指令前缀。
-        只拦截危险指令黑名单中的内容，其余全部直接发送到控制台。
+        1. 如果内容包含中/日/韩文字且不以 say 开头，自动补充 say 前缀
+        2. 危险指令黑名单拦截
+        3. 其余原样发送到控制台
         """
         reply = reply.strip()
         if not reply:
@@ -182,7 +187,13 @@ class EventHandler:
             logger.warning(f"[指令拦截] 来源={source}: {reason}")
             return
 
-        # 直接发送 AI 的原始回复到控制台
+        # 辅助检测：包含中文等文字内容且不以 say 开头，自动加 say
+        cmd = reply.split(None, 1)[0].lower() if reply else ""
+        if cmd != "say" and self._TEXT_PATTERN.search(reply):
+            reply = f"say {reply}"
+            logger.info(f"[辅助补全] 来源={source}: 自动添加 say 前缀")
+
+        # 发送到控制台
         await self.client.send_command(reply)
         logger.info(f"[AI回复] 来源={source}: {reply}")
 
